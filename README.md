@@ -12,6 +12,20 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 uv sync
 ```
 
+### Install globally
+
+```bash
+uv tool install .
+```
+
+This installs the `withings` command in `~/.local/bin/`. To update after code changes:
+
+```bash
+uv cache clean withings-cli && uv tool install . --force
+```
+
+> **Note:** `--force` alone may reinstall a stale cached wheel. Always `uv cache clean` first.
+
 ### Withings API credentials
 
 1. Create a Withings developer account at https://developer.withings.com
