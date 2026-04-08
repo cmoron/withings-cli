@@ -92,7 +92,12 @@ def logout() -> None:
 
 
 @main.command()
-@click.option("--type", "measure_type", help="Filter: weight, fat, bp, hr, spo2, scale, cardio...")
+@click.option(
+    "--type",
+    "measure_type",
+    help="Filter by type. Single: weight, fat, muscle, bone, hydration, bp, hr, spo2, temp, pwv. "
+    "Groups: scale (all scale metrics), cardio (BP + HR + PWV).",
+)
 @click.option("--since", help="Start date: '7d', '30d', or '2024-01-01'")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
 def measures(measure_type: str | None, since: str | None, fmt: str) -> None:
@@ -260,7 +265,10 @@ def ecg_list(since: str | None, fmt: str) -> None:
 @ecg.command("get")
 @click.argument("signal_id", type=int)
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
-def ecg_get(signal_id: int, fmt: str) -> None:
+@click.option(
+    "--no-signal", is_flag=True, help="Omit raw ECG waveform from JSON output (metadata only)."
+)
+def ecg_get(signal_id: int, fmt: str, no_signal: bool) -> None:
     """Show details of a specific ECG recording."""
     import json
 
@@ -287,8 +295,9 @@ def ecg_get(signal_id: int, fmt: str) -> None:
             "sampling_frequency": signal.sampling_frequency,
             "duration_seconds": round(duration, 1),
             "data_points": len(signal.signal),
-            "signal": signal.signal,
         }
+        if not no_signal:
+            data["signal"] = signal.signal
         if metadata:
             data["afib_classification"] = metadata.classification.name.lower()
             if metadata.bloodpressure:

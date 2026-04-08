@@ -195,7 +195,7 @@ Returns a JSON array of heart recording summaries, sorted by date descending.
 Fetches the full ECG signal data for a specific recording, including the raw waveform.
 
 ```bash
-withings ecg get <signal_id> [--format table|json]
+withings ecg get <signal_id> [--format table|json] [--no-signal]
 ```
 
 **Arguments:**
@@ -209,6 +209,7 @@ withings ecg get <signal_id> [--format table|json]
 | Option | Description |
 |---|---|
 | `--format` | Output format: `table` (default) or `json` |
+| `--no-signal` | Omit the raw ECG waveform from JSON output (metadata only). Useful for quick summaries without the ~15000-point signal array |
 
 **JSON output format (`--format json`):**
 
@@ -242,7 +243,7 @@ Returns a single JSON object with the full ECG signal and metadata.
 | `afib_classification` | string | `negative`, `positive`, `inconclusive`, or `unclassified` |
 | `systole` | int | Systolic blood pressure in mmHg |
 | `diastole` | int | Diastolic blood pressure in mmHg |
-| `signal` | int[] | Raw ECG waveform. Each integer is a sample in microvolts (uV). At 500 Hz, 15000 points = 30 seconds |
+| `signal` | int[] | Raw ECG waveform (omitted with `--no-signal`). Each integer is a sample in microvolts (uV). At 500 Hz, 15000 points = 30 seconds |
 
 **Interpreting the ECG signal:**
 - The `signal` array is a time series of voltage samples in microvolts
