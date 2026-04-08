@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-import click
+import rich_click as click
 from rich.console import Console
 from rich.table import Table
 
@@ -21,6 +21,11 @@ from withings_cli.models import (
     AFibClassification,
     MeasureType,
 )
+
+click.rich_click.USE_MARKDOWN = True
+click.rich_click.SHOW_ARGUMENTS = True
+click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
+click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 2)
 
 console = Console()
 
@@ -52,14 +57,27 @@ def _parse_since(since: str) -> int:
     return int(datetime.strptime(since, "%Y-%m-%d").timestamp())
 
 
-@click.group()
-def main() -> None:
-    """Withings health data CLI (read-only)."""
+@click.group(invoke_without_command=True)
+@click.pass_context
+def main(ctx: click.Context) -> None:
+    """**Withings** health data CLI — read-only access to body measurements and ECG recordings."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@main.command(hidden=True)
+@click.pass_context
+def help(ctx: click.Context) -> None:
+    """Show this help message."""
+    click.echo(ctx.parent.get_help())  # type: ignore[union-attr]
 
 
 @main.command()
 def login() -> None:
-    """Authenticate with Withings via OAuth2."""
+    """Authenticate with Withings via **OAuth2**.
+
+    Prompts for credentials, then opens a browser flow.
+    """
     creds = load_credentials()
     if creds:
         client_id = click.prompt("Client ID", default=creds["client_id"])
@@ -101,7 +119,7 @@ def logout() -> None:
 @click.option("--since", help="Start date: '7d', '30d', or '2024-01-01'")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
 def measures(measure_type: str | None, since: str | None, fmt: str) -> None:
-    """Fetch body measurements."""
+    """Fetch body measurements from scale, BPM Core, thermometer, etc."""
     from withings_cli.api import WithingsClient
 
     try:
