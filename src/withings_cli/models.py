@@ -92,7 +92,7 @@ class Measure(BaseModel):
 
     @property
     def real_value(self) -> float:
-        return self.value * (10**self.unit)
+        return float(self.value * (10**self.unit))
 
 
 class MeasureGroup(BaseModel):

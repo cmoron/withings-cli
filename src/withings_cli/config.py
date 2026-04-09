@@ -23,7 +23,8 @@ def save_json(path: Path, data: dict[str, Any]) -> None:
 def load_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
-    return json.loads(path.read_text())  # type: ignore[no-any-return]
+    result: dict[str, Any] = json.loads(path.read_text())
+    return result
 
 
 def save_tokens(tokens: dict[str, Any]) -> None:
@@ -43,5 +44,5 @@ def save_credentials(client_id: str, client_secret: str) -> None:
     save_json(CREDENTIALS_FILE, {"client_id": client_id, "client_secret": client_secret})
 
 
-def load_credentials() -> dict[str, str] | None:
-    return load_json(CREDENTIALS_FILE)  # type: ignore[return-value]
+def load_credentials() -> dict[str, Any] | None:
+    return load_json(CREDENTIALS_FILE)

@@ -55,7 +55,7 @@ def exchange_code(
     data = response.json()
     if data.get("status") != 0:
         raise AuthError(f"Token exchange failed: {data}")
-    tokens = data["body"]
+    tokens: dict[str, Any] = data["body"]
     save_tokens(tokens)
     return tokens
 
@@ -80,7 +80,7 @@ def refresh_access_token(
     data = response.json()
     if data.get("status") != 0:
         raise AuthError(f"Token refresh failed: {data}")
-    tokens = data["body"]
+    tokens: dict[str, Any] = data["body"]
     save_tokens(tokens)
     return tokens
 
@@ -103,10 +103,10 @@ def get_valid_access_token() -> str:
             credentials["client_secret"],
             tokens["refresh_token"],
         )
-        return new_tokens["access_token"]
+        return str(new_tokens["access_token"])
     except (AuthError, httpx.HTTPError, KeyError):
         # If refresh fails, try the existing token — it might still be valid
         access_token = tokens.get("access_token")
         if access_token is None:
             raise AuthError("No valid access token. Run 'withings login' first.") from None
-        return access_token
+        return str(access_token)

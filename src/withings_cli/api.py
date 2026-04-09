@@ -39,7 +39,8 @@ class WithingsClient:
             raise AuthError("Access token expired. Run 'withings login'.")
         if status != 0:
             raise APIError(f"API error (status={status}): {body.get('error', 'unknown')}")
-        return body.get("body", {})
+        result: dict[str, Any] = body.get("body", {})
+        return result
 
     def get_measures(
         self,

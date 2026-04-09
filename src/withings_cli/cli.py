@@ -353,3 +353,7 @@ def _find_heart_record(client: Any, signal_id: int) -> Any:
         if record.signal_id == signal_id:
             return record
     return None
+
+
+if __name__ == "__main__":
+    main()
