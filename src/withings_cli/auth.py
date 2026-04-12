@@ -3,16 +3,26 @@
 from __future__ import annotations
 
 import secrets
+import time
 from typing import Any
 from urllib.parse import urlencode
 
 import httpx
 
-from withings_cli.config import load_credentials, load_tokens, save_tokens
+from withings_cli.config import load_credentials, load_tokens, save_tokens, tokens_lock
 
 AUTHORIZE_URL = "https://account.withings.com/oauth2_user/authorize2"
 TOKEN_URL = "https://wbsapi.withings.net/v2/oauth2"
 SCOPE = "user.metrics"
+# Refresh when the access token has less than this many seconds of life left.
+REFRESH_SKEW_SECONDS = 300
+
+
+def _is_token_fresh(tokens: dict[str, Any]) -> bool:
+    expires_at = tokens.get("expires_at")
+    if not isinstance(expires_at, int):
+        return False
+    return expires_at - int(time.time()) > REFRESH_SKEW_SECONDS
 
 
 class AuthError(Exception):
@@ -86,27 +96,28 @@ def refresh_access_token(
 
 
 def get_valid_access_token() -> str:
-    """Load tokens and refresh if needed. Returns a valid access token."""
-    tokens = load_tokens()
-    if tokens is None:
-        raise AuthError("Not authenticated. Run 'withings login' first.")
+    """Return a valid access token, refreshing under a file lock if needed.
 
+    Withings refresh tokens are single-use (rotated on each refresh), so
+    concurrent invocations must serialize read → refresh → write. Otherwise a
+    second call that read the same refresh_token before the first call
+    rewrote it will fail and invalidate the stored state.
+    """
     credentials = load_credentials()
     if credentials is None:
         raise AuthError("No credentials found. Run 'withings login' first.")
 
-    # Try refreshing proactively — Withings tokens expire after 3 hours
-    # and we don't store the expiry timestamp, so always refresh
-    try:
+    with tokens_lock():
+        tokens = load_tokens()
+        if tokens is None:
+            raise AuthError("Not authenticated. Run 'withings login' first.")
+
+        if _is_token_fresh(tokens):
+            return str(tokens["access_token"])
+
         new_tokens = refresh_access_token(
             credentials["client_id"],
             credentials["client_secret"],
             tokens["refresh_token"],
         )
         return str(new_tokens["access_token"])
-    except (AuthError, httpx.HTTPError, KeyError):
-        # If refresh fails, try the existing token — it might still be valid
-        access_token = tokens.get("access_token")
-        if access_token is None:
-            raise AuthError("No valid access token. Run 'withings login' first.") from None
-        return str(access_token)

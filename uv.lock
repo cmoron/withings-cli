@@ -555,7 +555,7 @@ wheels = [
 ]
 
 [[package]]
-name = "withings-cli"
+name = "withings-health-cli"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
